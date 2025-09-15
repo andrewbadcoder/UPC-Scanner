@@ -10,10 +10,37 @@ public class UPC {
 	// Takes the filename of the image
 	// Returns an int array of the 95 scanned bits
 	//--------------------------------------------
+	//--------------------------------------------
+	// Scan in the bit pattern from the image
+	// Takes the filename of the image
+	// Returns an int array of the 95 scanned bits
+	//--------------------------------------------
 	public static int[] scanImage(String filename) {
-		
-		// YOUR CODE HERE....
-		return null; // TODO: fix this
+	    // Load the image using DUImage
+	    DUImage img = new DUImage(filename);
+
+	    // 95 bits total in UPC-A
+	    int[] bits = new int[95];
+
+	    // scan across the middle of the image
+	    int y = img.getHeight() / 2;
+
+	    // starting x-coordinate for first bit (given in the PDF)
+	    int startX = 5;
+
+	    // each bit = 2 pixels wide
+	    int bitWidth = 2;
+
+	    // read all 95 bits
+	    for (int i = 0; i < 95; i++) {
+	        int x = startX + i * bitWidth;
+	        // check the red channel
+	        int red = img.getRed(x, y);
+	        // black bar = 1, white space = 0
+	        bits[i] = (red < 128) ? 1 : 0;
+	    }
+
+	    return bits;
 	}
 	
 	//--------------------------------------------
