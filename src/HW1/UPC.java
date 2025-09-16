@@ -101,30 +101,28 @@ public class UPC {
 	//   it provides an error and exits
 	//--------------------------------------------
 	public static int[] decodeScan(int[] scanPattern) {
-	    // Define the expected guard patterns 
-	    int[] startPattern = {1, 0, 1};
-	    int[] middlePattern = {0, 1, 0, 1, 0};
-	    int[] endPattern = {1, 0, 1};
+	    // Define the expected guard patterns [cite: 20]
+	    int[] startPattern = {1, 0, 1}; // [cite: 20]
+	    int[] middlePattern = {0, 1, 0, 1, 0};// [cite: 20]
+	    int[] endPattern = {1, 0, 1}; // [cite: 20]
 
 	    // 1. VERIFY GUARD PATTERNS
 	    // Check Start Pattern (bits 0-2)
 	    if (!arraySliceEquals(scanPattern, 0, startPattern)) {
 	        System.out.println("Error: Invalid start pattern.");
-	        System.exit(1);
+	        System.exit(1); // [cite: 105]
 	    }
 
 	    // Check Middle Pattern (bits 45-49)
-	    // S(3) + L(42) = 45
 	    if (!arraySliceEquals(scanPattern, 45, middlePattern)) {
 	        System.out.println("Error: Invalid middle pattern.");
-	        System.exit(1);
+	        System.exit(1);// [cite: 105]
 	    }
 
 	    // Check End Pattern (bits 92-94)
-	    // S(3) + L(42) + M(5) + R(42) = 92
 	    if (!arraySliceEquals(scanPattern, 92, endPattern)) {
 	        System.out.println("Error: Invalid end pattern.");
-	        System.exit(1);
+	        System.exit(1);// [cite: 105]
 	    }
 	    
 	    // 2. DECODE DIGITS
@@ -132,22 +130,31 @@ public class UPC {
 
 	    // Decode the 6 LEFT digits [cite: 114]
 	    for (int i = 0; i < 6; i++) {
-	        int[] digitSlice = Arrays.copyOfRange(scanPattern, 3 + (i * 7), 3 + (i * 7) + 7);
-	        decodedDigits[i] = matchPattern(digitSlice, true); // true for Left pattern
+	        // --- THIS IS THE FIX ---
+	        // Calculate the start index for the current left-side digit.
+	        // It starts after the 3-bit start pattern.
+	        int startIndex = 3 + (i * 7);
+	        // Call matchPattern with the full scan, the calculated index, and 'true' for left.
+	        decodedDigits[i] = matchPattern(scanPattern, startIndex, true);
+	        
 	        if (decodedDigits[i] == -1) {
 	            System.out.println("Error: Could not decode left-side digit #" + (i + 1));
-	            System.exit(1);
+	            System.exit(1); // [cite: 105]
 	        }
 	    }
 
 	    // Decode the 6 RIGHT digits [cite: 114]
 	    for (int i = 0; i < 6; i++) {
-	        // Start index is 50: S(3) + L(42) + M(5) = 50
-	        int[] digitSlice = Arrays.copyOfRange(scanPattern, 50 + (i * 7), 50 + (i * 7) + 7);
-	        decodedDigits[i + 6] = matchPattern(digitSlice, false); // false for Right pattern
+	        // --- THIS IS THE FIX ---
+	        // Calculate the start index for the current right-side digit.
+	        // It starts after S(3) + L(42) + M(5) = 50.
+	        int startIndex = 50 + (i * 7);
+	        // Call matchPattern with the full scan, the calculated index, and 'false' for left.
+	        decodedDigits[i + 6] = matchPattern(scanPattern, startIndex, false);
+	        
 	        if (decodedDigits[i + 6] == -1) {
 	            System.out.println("Error: Could not decode right-side digit #" + (i + 1));
-	            System.exit(1);
+	            System.exit(1); // [cite: 105]
 	        }
 	    }
 
@@ -156,14 +163,11 @@ public class UPC {
 
 	/**
 	 * Helper method to check if a slice of a larger array matches a target array.
-	 * @param source The array to check within (e.g., the 95-bit scan).
-	 * @param offset The starting index in the source array.
-	 * @param target The pattern to match (e.g., the start pattern).
-	 * @return true if the slice matches the target, false otherwise.
+	 * (This helper method is still useful and does not need to change)
 	 */
 	private static boolean arraySliceEquals(int[] source, int offset, int[] target) {
 	    if ((offset + target.length) > source.length) {
-	        return false; // Avoids out of bounds exception
+	        return false;
 	    }
 	    for (int i = 0; i < target.length; i++) {
 	        if (source[offset + i] != target[i]) {
@@ -180,11 +184,44 @@ public class UPC {
 		//	2.Add the digits in the even-numbered positions (first, third, fifth, etc.) to the result.
 		//	3.Find the result modulo 10 (i.e. the remainder when divided by 10.. 10 goes into 58 5 times with 8 leftover).
 		//	4.If the result is not zero, subtract the result from ten.
+		int evenSum = 0;
+		int oddSum = 0;
+		int res  = 0;
+		for(int i = 0; i < 11; ++i)
+		{
+			if(i % 2 == 0)
+			{
+				evenSum = evenSum + digits[i];
+				
+			}
+			else
+			{
+				oddSum = oddSum + digits[i];
+			}
+		}
+		evenSum = evenSum * 3;
+		res = evenSum + oddSum;
+		
+		int modRes = res % 10;
+		int actualDigit;
+		if(modRes != 0)
+		{
+			actualDigit = 10 - modRes;
+			
+		} 
+		else
+		{
+			actualDigit = 0;
+		}
+		
+		int testDigit = digits[11];
+		
+		
+		return testDigit == actualDigit;		
 
 		// Note that what the UPC standard calls 'odd' are our evens since we are zero based and they are one based
 		
-		// YOUR CODE HERE...
-		return false; // TODO: fix this
+		// YOUR CODE HERE...// TODO: fix this
 	}
 	
 	//--------------------------------------------
