@@ -2,6 +2,7 @@ package HW1;
 
 // This is the starting version of the UPC-A scanner
 //   that needs to be filled in for the homework
+import java.util.Arrays;
 
 public class UPC {
 	
@@ -100,15 +101,77 @@ public class UPC {
 	//   it provides an error and exits
 	//--------------------------------------------
 	public static int[] decodeScan(int[] scanPattern) {
-		
-		// YOUR CODE HERE...
-		return null; // TODO: fix this
+	    // Define the expected guard patterns 
+	    int[] startPattern = {1, 0, 1};
+	    int[] middlePattern = {0, 1, 0, 1, 0};
+	    int[] endPattern = {1, 0, 1};
+
+	    // 1. VERIFY GUARD PATTERNS
+	    // Check Start Pattern (bits 0-2)
+	    if (!arraySliceEquals(scanPattern, 0, startPattern)) {
+	        System.out.println("Error: Invalid start pattern.");
+	        System.exit(1);
+	    }
+
+	    // Check Middle Pattern (bits 45-49)
+	    // S(3) + L(42) = 45
+	    if (!arraySliceEquals(scanPattern, 45, middlePattern)) {
+	        System.out.println("Error: Invalid middle pattern.");
+	        System.exit(1);
+	    }
+
+	    // Check End Pattern (bits 92-94)
+	    // S(3) + L(42) + M(5) + R(42) = 92
+	    if (!arraySliceEquals(scanPattern, 92, endPattern)) {
+	        System.out.println("Error: Invalid end pattern.");
+	        System.exit(1);
+	    }
+	    
+	    // 2. DECODE DIGITS
+	    int[] decodedDigits = new int[12];
+
+	    // Decode the 6 LEFT digits [cite: 114]
+	    for (int i = 0; i < 6; i++) {
+	        int[] digitSlice = Arrays.copyOfRange(scanPattern, 3 + (i * 7), 3 + (i * 7) + 7);
+	        decodedDigits[i] = matchPattern(digitSlice, true); // true for Left pattern
+	        if (decodedDigits[i] == -1) {
+	            System.out.println("Error: Could not decode left-side digit #" + (i + 1));
+	            System.exit(1);
+	        }
+	    }
+
+	    // Decode the 6 RIGHT digits [cite: 114]
+	    for (int i = 0; i < 6; i++) {
+	        // Start index is 50: S(3) + L(42) + M(5) = 50
+	        int[] digitSlice = Arrays.copyOfRange(scanPattern, 50 + (i * 7), 50 + (i * 7) + 7);
+	        decodedDigits[i + 6] = matchPattern(digitSlice, false); // false for Right pattern
+	        if (decodedDigits[i + 6] == -1) {
+	            System.out.println("Error: Could not decode right-side digit #" + (i + 1));
+	            System.exit(1);
+	        }
+	    }
+
+	    return decodedDigits;
 	}
-	
-	//--------------------------------------------
-	// Do the checksum of the digits here
-	// All digits are assumed to be in range 0..9
-	// Returns true if check digit is correct and false otherwise
+
+	/**
+	 * Helper method to check if a slice of a larger array matches a target array.
+	 * @param source The array to check within (e.g., the 95-bit scan).
+	 * @param offset The starting index in the source array.
+	 * @param target The pattern to match (e.g., the start pattern).
+	 * @return true if the slice matches the target, false otherwise.
+	 */
+	private static boolean arraySliceEquals(int[] source, int offset, int[] target) {
+	    if ((offset + target.length) > source.length) {
+	        return false; // Avoids out of bounds exception
+	    }
+	    for (int i = 0; i < target.length; i++) {
+	        if (source[offset + i] != target[i]) {
+	            return false;
+	        }
+	    }
+	    return true;
+	}
 	//--------------------------------------------
 	public static boolean verifyCode(int[] digits) {
 		
