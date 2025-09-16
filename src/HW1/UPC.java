@@ -67,7 +67,26 @@ public class UPC {
 				            {0,1,1,0,1,1,1},
 				            {0,0,0,1,0,1,1}};
 		
-		// YOUR CODE HERE....
+		for(int i=0;i<10;i++) {
+			boolean match=true;
+			for(int j=0; j<7;j++) {
+				int pattern=scanPattern[startIndex+ j];
+				if (left==true){
+					 match=pattern==digitPat[i][j];
+				}
+				else {
+					match= pattern== 1- digitPat[i][j];
+				}
+				if (match==false) {
+					break;
+				}
+				
+				
+			}
+			if(match==true) {
+				return i;
+			}
+		}
 		return -1; // TODO: fix this
 	}
 	
