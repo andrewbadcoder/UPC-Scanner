@@ -253,7 +253,32 @@ public class UPC {
 		int[] digits = decodeScan(scanPattern);
 		
 		// YOUR CODE HERE TO HANDLE UPSIDE-DOWN SCANS
-		
+		if (scanError) {
+		    int[] reversedPattern = new int[95];
+		    for (int i = 0; i < 95; i++) {
+		        reversedPattern[i] = 1 - scanPattern[94 - i];
+		    }
+		    
+		    digits = decodeScan(reversedPattern);
+		    
+		    if (digits != null) {
+		        scanError = false;
+		        for (int i = 0; i < 12; i++) {
+		            if (digits[i] == -1) {
+		                scanError = true;
+		                break;
+		            }
+		        }
+		        
+		        if (!scanError) {
+		            int[] correctedDigits = new int[12];
+		            for (int i = 0; i < 12; i++) {
+		                correctedDigits[i] = digits[11 - i];
+		            }
+		            digits = correctedDigits;
+		        }
+		    }
+		}
 		
 		
 		
